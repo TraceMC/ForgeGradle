@@ -138,6 +138,7 @@ public class UserDevPlugin implements Plugin<Project> {
         TaskProvider<ExtractMCPData> extractSrg = project.getTasks().register("extractSrg", ExtractMCPData.class);
         TaskProvider<GenerateSRG> createSrgToMcp = project.getTasks().register("createSrgToMcp", GenerateSRG.class);
         TaskProvider<GenerateSRG> createMcpToSrg = project.getTasks().register("createMcpToSrg", GenerateSRG.class);
+        TaskProvider<GenerateSRG> createMcpToObf = project.getTasks().register("createMcpToObf", GenerateSRG.class);
         TaskProvider<DownloadMCMeta> downloadMCMeta = project.getTasks().register("downloadMCMeta", DownloadMCMeta.class);
         TaskProvider<ExtractNatives> extractNatives = project.getTasks().register("extractNatives", ExtractNatives.class);
         TaskProvider<DownloadAssets> downloadAssets = project.getTasks().register("downloadAssets", DownloadAssets.class);
@@ -161,6 +162,15 @@ public class UserDevPlugin implements Plugin<Project> {
             task.dependsOn(extractSrg);
             task.setSrg(extractSrg.get().getOutput());
             task.setMappings(extension.getMappings());
+            task.setTarget(MappingFile.Mapping.SEARGE);
+        });
+
+        createMcpToObf.configure(task -> {
+            task.setReverse(true);
+            task.dependsOn(extractSrg);
+            task.setSrg(extractSrg.get().getOutput());
+            task.setMappings(extension.getMappings());
+            task.setTarget(MappingFile.Mapping.NOTCH);
         });
 
         extractNatives.configure(task -> {
@@ -290,9 +300,12 @@ public class UserDevPlugin implements Plugin<Project> {
             downloadMcpConfig.get().setArtifact("de.oceanlabs.mcp:mcp_config:" + mcpVer + "@zip");
             downloadMCMeta.get().setMCVersion(mcVer);
 
-            RenameJarInPlace reobfJar = reobf.create("jar");
-            reobfJar.dependsOn(createMcpToSrg);
-            reobfJar.setMappings(createMcpToSrg.get().getOutput());
+            // The actual task that is required for the current context
+            TaskProvider<GenerateSRG> genSrg = extension.getReobfMappings().isNotch() ? createMcpToObf : createMcpToSrg;
+
+            RenameJarInPlace reobfJar  = reobf.create("jar");
+            reobfJar.dependsOn(createMcpToSrg, createMcpToObf); // Generate mappings for both formats regardless
+            reobfJar.setMappings(genSrg.get().getOutput());
 
             String assetIndex = mcVer;
 

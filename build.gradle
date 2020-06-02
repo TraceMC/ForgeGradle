@@ -14,7 +14,7 @@ compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
 }
 
-group = 'net.minecraftforge.gradle'
+group = 'com.github.tracemc'
 version = gitVersion()
 def gitVersion() {
     def raw = grgit.describe(longDescr: true, tags: true)
@@ -108,22 +108,22 @@ project.extensions.eclipse.classpath.file.whenMerged { Classpath cp ->
 }
 
 publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
     repositories {
         maven {
-            if (project.hasProperty('forgeMavenPassword')) {
+            if (project.hasProperty('ghprPass')) {
                 credentials {
-                    username project.properties.forgeMavenUser
-                    password project.properties.forgeMavenPassword
+                    username project.properties.ghprUser
+                    password project.properties.ghprPass
                 }
-                url 'https://files.minecraftforge.net/maven/manage/upload'
+                url 'https://maven.pkg.github.com/TraceMC/ForgeGradle'
             } else {
                 url 'file://' + rootProject.file('repo').getAbsolutePath()
             }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
         }
     }
 }

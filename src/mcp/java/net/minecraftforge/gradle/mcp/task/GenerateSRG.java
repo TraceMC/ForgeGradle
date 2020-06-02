@@ -37,9 +37,10 @@ public class GenerateSRG extends DefaultTask {
     private File srg;
     private String mapping;
     private MappingFile.Format format = MappingFile.Format.TSRG;
-    private boolean notch = false;
     private boolean reverse = false;
     private File output = getProject().file("build/" + getName() + "/output.tsrg");
+    private File outputSRG = withExtension(this.output, "srg");
+    private MappingFile.Mapping target;
 
     @TaskAction
     public void apply() throws IOException {
@@ -51,7 +52,7 @@ public class GenerateSRG extends DefaultTask {
         MappingFile ret = new MappingFile();
         McpNames map = McpNames.load(names);
 
-        if (getNotch()) {
+        if (getTarget().isNotch()) {
             obf_to_srg.getPackages().forEach(e -> ret.addPackage(e.getOriginal(), e.getMapped()));
             obf_to_srg.getClasses().forEach(cls -> {
                ret.addClass(cls.getOriginal(), cls.getMapped());
@@ -70,6 +71,14 @@ public class GenerateSRG extends DefaultTask {
         }
 
         ret.write(getFormat(), getOutput(), getReverse());
+        // Also create SRG file because we're disgusting
+        ret.write(MappingFile.Format.SRG, this.outputSRG, getReverse());
+    }
+
+    private File withExtension(File file, String extension) {
+        int i = file.getName().lastIndexOf('.');
+        String name = file.getName().substring(0, i);
+        return new File(file.getParent(), name + "." + extension);
     }
 
     private File findNames(String mapping) {
@@ -98,6 +107,15 @@ public class GenerateSRG extends DefaultTask {
     }
 
     @Input
+    public MappingFile.Mapping getTarget() {
+        return target;
+    }
+
+    public void setTarget(MappingFile.Mapping value) {
+        this.target = value;
+    }
+
+    @Input
     public MappingFile.Format getFormat() {
         return format;
     }
@@ -106,14 +124,6 @@ public class GenerateSRG extends DefaultTask {
     }
     public void setFormat(String value) {
         this.setFormat(MappingFile.Format.valueOf(value));
-    }
-
-    @Input
-    public boolean getNotch() {
-        return this.notch;
-    }
-    public void setNotch(boolean value) {
-        this.notch = value;
     }
 
     @Input
@@ -130,5 +140,6 @@ public class GenerateSRG extends DefaultTask {
     }
     public void setOutput(File value) {
         this.output = value;
+        this.outputSRG = withExtension(this.output, "srg");
     }
 }
