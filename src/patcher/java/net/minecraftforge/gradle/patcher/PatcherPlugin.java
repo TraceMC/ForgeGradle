@@ -171,7 +171,6 @@ public class PatcherPlugin implements Plugin<Project> {
             task.setReverse(false);
         });
         createMcp2Obf.configure(task -> {
-            task.setNotch(true);
             task.setReverse(true);
         });
         createExc.configure(task -> {

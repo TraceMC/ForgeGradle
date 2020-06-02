@@ -85,6 +85,8 @@ public class UserDevPlugin implements Plugin<Project> {
 
                 project.getTasks().getByName("assemble").dependsOn(task);
 
+                task.setJarTask(jarName);
+
                 // do after-Evaluate resolution, for the same of good error reporting
                 project.afterEvaluate(p -> {
                     Task jar = project.getTasks().getByName(jarName);
@@ -306,6 +308,7 @@ public class UserDevPlugin implements Plugin<Project> {
             RenameJarInPlace reobfJar  = reobf.create("jar");
             reobfJar.dependsOn(createMcpToSrg, createMcpToObf); // Generate mappings for both formats regardless
             reobfJar.setMappings(genSrg.get().getOutput());
+            reobfJar.setMappingType(extension.getReobfMappings());
 
             String assetIndex = mcVer;
 
